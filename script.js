@@ -7,7 +7,7 @@ const steps = [
   {
     type: "text",
     question: "What was your first thought about me? Be honest 👀",
-    placeholder: "I can handle it… I think 😄"
+    placeholder: "No filters 😄"
   },
   {
     type: "slider",
@@ -19,23 +19,26 @@ const steps = [
   }
 ];
 
-let currentStep = 0;
+let current = 0;
+let sliderTouched = false;
 
+const card = document.getElementById("card");
 const questionEl = document.getElementById("question");
 const textInput = document.getElementById("textInput");
 const sliderBox = document.getElementById("sliderBox");
 const slider = document.getElementById("slider");
 const sliderValue = document.getElementById("sliderValue");
 const nextBtn = document.getElementById("nextBtn");
-const card = document.getElementById("card");
+const errorEl = document.getElementById("error");
 
-function renderStep() {
-  const step = steps[currentStep];
+function render() {
+  const step = steps[current];
   questionEl.innerText = step.question;
+  errorEl.innerText = "";
 
   textInput.style.display = "none";
   sliderBox.style.display = "none";
-  nextBtn.style.display = "inline-block";
+  nextBtn.style.display = "block";
 
   if (step.type === "text") {
     textInput.style.display = "block";
@@ -45,33 +48,51 @@ function renderStep() {
 
   if (step.type === "slider") {
     sliderBox.style.display = "block";
-    updateSliderText();
+    sliderTouched = false;
+    sliderValue.innerText = "Move me 😌";
   }
 
   if (step.type === "final") {
     card.innerHTML = `
       <h1>So… what do you say? 😌💖</h1>
       <button onclick="celebrate()">YES 💕</button>
-      <br/><br/>
-      <button onclick="celebrate()">obviously YES 🙄</button>
+      <button id="noBtn">No 😶</button>
     `;
+
+    const noBtn = document.getElementById("noBtn");
+    noBtn.addEventListener("mouseover", moveNo);
   }
 }
 
-function updateSliderText() {
-  const value = slider.value;
-  if (value < 40) sliderValue.innerText = "hmm 🤔";
-  else if (value < 70) sliderValue.innerText = "nice 😌";
-  else sliderValue.innerText = "WOW 😍";
+function moveNo(e) {
+  const btn = e.target;
+  const x = Math.random() * 240 - 120;
+  const y = Math.random() * 180 - 90;
+  btn.style.transform = `translate(${x}px, ${y}px)`;
 }
 
-slider.addEventListener("input", updateSliderText);
+slider.addEventListener("input", () => {
+  sliderTouched = true;
+  const v = slider.value;
+  sliderValue.innerText =
+    v < 40 ? "hmm 🤔" : v < 70 ? "nice 😌" : "WOW 😍";
+});
 
 nextBtn.addEventListener("click", () => {
-  currentStep++;
-  if (currentStep < steps.length) {
-    renderStep();
+  const step = steps[current];
+
+  if (step.type === "text" && textInput.value.trim() === "") {
+    errorEl.innerText = "Answer first 😌";
+    return;
   }
+
+  if (step.type === "slider" && !sliderTouched) {
+    errorEl.innerText = "Come on… move it 😏";
+    return;
+  }
+
+  current++;
+  if (current < steps.length) render();
 });
 
 function celebrate() {
@@ -82,4 +103,4 @@ function celebrate() {
   `;
 }
 
-renderStep();
+render();
